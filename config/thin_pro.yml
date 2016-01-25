@@ -1,0 +1,11 @@
+---
+environment: production
+log: log/thin_pro.log
+pid: tmp/pids/thin_pro.pid
+port: 3400
+max_conns: 1024
+max_persistent_conns: 512
+timeout: 60
+wait: 60
+daemonize: true
+servers: 4
