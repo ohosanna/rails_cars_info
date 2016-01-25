@@ -1,7 +1,7 @@
 json.model do
   json.id @model.id
   json.name @model.name
-  json.base_spec @model.base_spec.name
+  json.base_spec @model.base_spec
   json.vehicle_body @model.vehicle_body
   json.engine do
     json.name @model.engine.name
@@ -32,4 +32,6 @@ json.model do
   json.lamp @model.lamp
   json.mirror @model.mirror
   json.multimedium @model.multimedium
+  json.safety @model.safety
+  json.seat @model.seat
 end
