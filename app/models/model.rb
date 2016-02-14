@@ -19,4 +19,8 @@ class Model < ActiveRecord::Base
   has_many :model_colors
   has_many :interior_colors, :through => :model_colors
   has_many :exterior_colors, :through => :model_colors
+
+  def search_from_vin(series_id, year, structure, displacement, gearbox)
+    return Model.where("series_id = :series_id AND produce_year = :produce_year AND structure = :structure AND displacement = :displacement, gearbox_name = :gearbox", {series_id: series_id, produce_year: year, structure: structure, displacement: displacement, gearbox: gearbox})
+  end
 end

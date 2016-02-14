@@ -269,13 +269,19 @@ ActiveRecord::Schema.define(version: 20151125085017) do
     t.string   "produce_year", limit: 255
     t.integer  "autohome_id",  limit: 4
     t.integer  "series_id",    limit: 4
+    t.string   "structure",    limit: 255
+    t.string   "displacement", limit: 255
+    t.string   "gearbox_name", limit: 255
     t.datetime "created_at",               null: false
     t.datetime "updated_at",               null: false
   end
 
   add_index "models", ["autohome_id"], name: "index_models_on_autohome_id", using: :btree
+  add_index "models", ["displacement"], name: "index_models_on_displacement", using: :btree
+  add_index "models", ["gearbox_name"], name: "index_models_on_gearbox_name", using: :btree
   add_index "models", ["produce_year"], name: "index_models_on_produce_year", using: :btree
   add_index "models", ["series_id"], name: "index_models_on_series_id", using: :btree
+  add_index "models", ["structure"], name: "index_models_on_structure", using: :btree
 
   create_table "multimedia", force: :cascade do |t|
     t.integer  "model_id",          limit: 4
