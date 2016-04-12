@@ -5,6 +5,7 @@
 #by hosanna 2015/11/18
 #
 # 获取汽车系列车型参数网址 http://car.autohome.com.cn/config/series/#{series_id}.html
+# 获取指定ID车型同年份系列车型参数网址  "http://car.autohome.com.cn/config/spec/#{id}.html#pvareaid=102170"
 ####
 desc "Fetch car specs form autohome.com.cn "
 task :fetch_car_specs => :environment do
@@ -18,11 +19,16 @@ task :fetch_car_specs => :environment do
   @data_count = 0
 
   def get_page_content(id)
-    uri = URI.parse("http://car.autohome.com.cn/config/series/#{id}.html")
+    #uri = URI.parse("http://car.autohome.com.cn/config/series/#{id}.html")
+    uri = URI.parse("http://car.autohome.com.cn/config/spec/#{id}.html#pvareaid=102170")
+    puts "向 #{uri} 发起请求"
     html = Net::HTTP.get_response(uri).body.force_encoding("gbk").encode!("utf-8")
     @doc = Nokogiri::HTML.parse html
     #通过判断参数配置菜单是否链接来确认该系列车型是否有数据
-    if @doc.css('.nav-item.current span').first.nil?
+    #puts @doc.css('.nav-item:nth-child(2) span').first.nil?
+    #判断该系列车型是否有数据
+    #puts @doc.css('p[style="margin: 10px 0px; color: #D60000"]').first.nil?
+    if @doc.css('p[style="margin: 10px 0px; color: #D60000"]').first.nil?
       # 需要的车辆信息在页面javascript的变量中，先提取所有script标签里的内容
       @content = {}
       scripts = ""
@@ -142,6 +148,7 @@ task :fetch_car_specs => :environment do
           @model.base_spec.engine = get_spec_value(base_spec, "发动机", spec_index)
           @model.base_spec.gearbox = get_spec_value(base_spec, "变速箱", spec_index)
           @model.gearbox_name = get_spec_value(base_spec, "变速箱", spec_index).gsub(/\d+挡/,'')
+          #@model.update_attribute(:gearbox_name, get_spec_value(base_spec, "变速箱", spec_index).gsub(/\d+挡/,''))
           @model.base_spec.LWH = get_spec_value(base_spec, "长*宽*高(mm)", spec_index)
           @model.base_spec.body_structure = get_spec_value(base_spec, "车身结构", spec_index)
           @model.base_spec.max_speed = get_spec_value(base_spec, "最高车速(km/h)", spec_index)
@@ -167,6 +174,7 @@ task :fetch_car_specs => :environment do
           @model.vehicle_body.curb_weight = get_spec_value(vehicle_body, "整备质量(kg)", spec_index)
           @model.vehicle_body.structure = get_spec_value(vehicle_body, "车身结构", spec_index)
           @model.structure = get_spec_value(vehicle_body, "车身结构", spec_index)
+          #@model.update_attribute(:structure, @model.vehicle_body.structure)
           @model.vehicle_body.doors_num = get_spec_value(vehicle_body, "车门数(个)", spec_index)
           @model.vehicle_body.seats_num = get_spec_value(vehicle_body, "座位数(个)", spec_index)
           @model.vehicle_body.tank_capatity = get_spec_value(vehicle_body, "油箱容积(L)", spec_index)
@@ -179,6 +187,7 @@ task :fetch_car_specs => :environment do
           @model.engine.name = get_spec_value(engine, "发动机型号", spec_index)
           @model.engine.displacement = get_spec_value(engine, "排量(mL)", spec_index)
           @model.displacement = get_spec_value(engine, "排量(L)", spec_index)
+          #@model.update_attribute(:displacement,  get_spec_value(engine, "排量(L)", spec_index))
           @model.engine.intake_type = get_spec_value(engine, "进气形式", spec_index)
           @model.engine.cylinder_arrangement = get_spec_value(engine, "气缸排列形式", spec_index)
           @model.engine.cylinder_num = get_spec_value(engine, "气缸数(个)", spec_index)
@@ -438,25 +447,29 @@ task :fetch_car_specs => :environment do
             end
           end
         end
-
+        @model.save
       end
     end
-    @model.save
   end
 
-  #3170, 2745
-  #@series = Series.where(autohome_id: [2745, 3170])
+  #3170, 2745, 2767, 884
+  #@series = Series.where(autohome_id: [2123,2027, 884, 983])
   @series = Series.all
 
   @series.each do |series|
-    @page_content = get_page_content(series.autohome_id)
-    if @page_content.nil?
-      @nodata_series.push(series.autohome_id)
-      puts "该系列车型#{series.autohome_id}没有数据"
-    else
-      puts "正在处理#{series.autohome_id}系列车型的数据"
-      get_car_specs(@page_content) unless @page_content.nil?
-      #get_spec_value(@page_content, "厂商", 0) unless @page_content.nil?
+    years = series.models.pluck(:produce_year).uniq
+    years.each do |year|
+      spec = series.models.find_by_produce_year(year)
+      @page_content = get_page_content(spec.autohome_id)
+      #@page_content = get_page_content(series.autohome_id)
+      if @page_content.nil?
+        @nodata_series.push(series.autohome_id)
+        puts "#{series.autohome_id}系列#{year}年款车型没有数据"
+      else
+        puts "正在处理#{series.autohome_id}系列#{year}年款车型的数据"
+        get_car_specs(@page_content)
+        #get_spec_value(@page_content, "厂商", 0) unless @page_content.nil?
+      end
     end
   end
 
