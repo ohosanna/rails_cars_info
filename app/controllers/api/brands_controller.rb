@@ -7,6 +7,7 @@ class Api::BrandsController < Api::BaseController
   def show
     @brand = Brand.find(params[:id])
     @factories = @brand.factories
+    @series = @brand.series
   end
 
   def get_series
